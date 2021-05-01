@@ -1,0 +1,386 @@
+VkResult
+Init07TextureBuffer( INOUT MyTexture * pMyTexture)
+{
+	HERE_I_AM( "Init07TextureBuffer" );
+
+	VkResult result = VK_SUCCESS;
+
+	uint32_t texWidth = pMyTexture->width;
+	uint32_t texHeight = pMyTexture->height;
+	unsigned char *texture = pMyTexture->pixels;
+	VkDeviceSize textureSize = texWidth * texHeight * 4;		// rgba, 1 byte each
+
+	VkImage  stagingImage;
+	VkImage  textureImage;
+
+
+	// *******************************************************************************
+	// this first {...} is to create the staging image:
+	// *******************************************************************************
+	{
+		VkImageCreateInfo			vici;
+			vici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			vici.pNext = nullptr;
+			vici.flags = 0;
+#ifdef CHOICES
+VK_IMAGE_CREATE_SPARSE_BINDING_BIT
+VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT
+VK_IMAGE_CREATE_SPARSE_ALIASED_BIT
+VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT
+VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT
+VK_IMAGE_CREATE_BIND_SFR_BIT_KHX
+VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT_KHR
+#endif
+			vici.imageType = VK_IMAGE_TYPE_2D;
+			//vici.format = VK_FORMAT_R8G8B8A8_UNORM;
+			vici.format = VK_FORMAT_B8G8R8A8_SRGB;
+			vici.extent.width = texWidth;
+			vici.extent.height = texHeight;
+			vici.extent.depth = 1;
+			vici.mipLevels = 1;
+			vici.arrayLayers = 1;
+			vici.samples = VK_SAMPLE_COUNT_1_BIT;
+			vici.tiling = VK_IMAGE_TILING_LINEAR;
+#ifdef CHOICES
+VK_IMAGE_TILING_OPTIMAL
+VK_IMAGE_TILING_LINEAR
+#endif
+			vici.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+#ifdef CHOICES
+VK_IMAGE_USAGE_TRANSFER_SRC_BIT
+VK_IMAGE_USAGE_TRANSFER_DST_BIT
+VK_IMAGE_USAGE_SAMPLED_BIT
+VK_IMAGE_USAGE_STORAGE_BIT
+VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
+VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT
+VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT
+#endif
+			vici.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			vici.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+#ifdef CHOICES
+VK_IMAGE_LAYOUT_UNDEFINED
+VK_IMAGE_LAYOUT_PREINITIALIZED
+#endif
+			vici.queueFamilyIndexCount = 0;
+			vici.pQueueFamilyIndices = (const uint32_t *)nullptr;
+
+		result = vkCreateImage(LogicalDevice, IN &vici, PALLOCATOR, OUT &stagingImage);	// allocated, but not filled
+		REPORT("vkCreateImage");
+
+		VkMemoryRequirements			vmr;
+		vkGetImageMemoryRequirements(LogicalDevice, IN stagingImage, OUT &vmr);
+
+		if (Verbose)
+		{
+			fprintf(FpDebug, "Image vmr.size = %lld\n", vmr.size);
+			fprintf(FpDebug, "Image vmr.alignment = %lld\n", vmr.alignment);
+			fprintf(FpDebug, "Image vmr.memoryTypeBits = 0x%08x\n", vmr.memoryTypeBits);
+			fflush(FpDebug);
+		}
+
+		VkMemoryAllocateInfo			vmai;
+			vmai.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			vmai.pNext = nullptr;
+			vmai.allocationSize = vmr.size;
+			vmai.memoryTypeIndex = FindMemoryThatIsHostVisible( vmr.memoryTypeBits );	// because we want to mmap it
+
+		VkDeviceMemory				vdm;
+		result = vkAllocateMemory(LogicalDevice, IN &vmai, PALLOCATOR, OUT &vdm);
+		REPORT("vkAllocateMemory");
+		pMyTexture->vdm = vdm;
+
+		result = vkBindImageMemory(LogicalDevice, IN stagingImage, IN vdm, 0);	// 0 = offset
+		REPORT("vkBindImageMemory");
+
+
+		// we have now created the staging image -- fill it with the pixel data:
+
+		VkImageSubresource			vis;
+			vis.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			vis.mipLevel = 0;
+			vis.arrayLayer = 0;
+
+		VkSubresourceLayout			vsl;
+		vkGetImageSubresourceLayout(LogicalDevice, stagingImage, IN &vis, OUT &vsl);
+
+		if (Verbose)
+		{
+			fprintf(FpDebug, "Subresource Layout:\n");
+			fprintf(FpDebug, "\toffset = %lld\n", vsl.offset);
+			fprintf(FpDebug, "\tsize = %lld\n", vsl.size);
+			fprintf(FpDebug, "\trowPitch = %lld\n", vsl.rowPitch);
+			fprintf(FpDebug, "\tarrayPitch = %lld\n", vsl.arrayPitch);
+			fprintf(FpDebug, "\tdepthPitch = %lld\n", vsl.depthPitch);
+			fflush(FpDebug);
+		}
+
+		void * gpuMemory;
+		vkMapMemory(LogicalDevice, vdm, 0, VK_WHOLE_SIZE, 0, OUT &gpuMemory);
+							// 0 and 0 = offset and memory map flags
+
+		if (vsl.rowPitch == 4 * texWidth)
+		{
+			memcpy(gpuMemory, (void *)texture, (size_t)textureSize);
+		}
+		else
+		{
+			unsigned char *gpuBytes = (unsigned char *)gpuMemory;
+			for (unsigned int y = 0; y < texHeight; y++)
+			{
+				memcpy(&gpuBytes[y * vsl.rowPitch], &texture[4 * y * texWidth], (size_t)(4*texWidth) );
+			}
+		}
+
+		vkUnmapMemory(LogicalDevice, vdm);
+
+	}
+	// *******************************************************************************
+
+
+	// *******************************************************************************
+	// this second {...} is to create the actual texture image:
+	// *******************************************************************************
+	{
+		VkImageCreateInfo			vici;
+			vici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			vici.pNext = nullptr;
+			vici.flags = 0;
+			vici.imageType = VK_IMAGE_TYPE_2D;
+			vici.format = VK_FORMAT_R8G8B8A8_SRGB;
+			vici.extent.width  = texWidth;
+			vici.extent.height = texHeight;
+			vici.extent.depth = 1;
+			vici.mipLevels = 1;
+			vici.arrayLayers = 1;
+			vici.samples = VK_SAMPLE_COUNT_1_BIT;
+			vici.tiling = VK_IMAGE_TILING_OPTIMAL;
+			vici.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+					// because we are transfering into it and will eventual sample from it
+			vici.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			vici.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+			vici.queueFamilyIndexCount = 0;
+			vici.pQueueFamilyIndices = (const uint32_t *)nullptr;
+
+		result = vkCreateImage(LogicalDevice, IN &vici, PALLOCATOR, OUT &textureImage);	// allocated, but not filled
+		REPORT("vkCreateImage");
+
+		VkMemoryRequirements			vmr;
+		vkGetImageMemoryRequirements(LogicalDevice, IN textureImage, OUT &vmr);
+
+		if( Verbose )
+		{
+			fprintf( FpDebug, "Texture vmr.size = %lld\n", vmr.size );
+			fprintf( FpDebug, "Texture vmr.alignment = %lld\n", vmr.alignment );
+			fprintf( FpDebug, "Texture vmr.memoryTypeBits = 0x%08x\n", vmr.memoryTypeBits );
+			fflush( FpDebug );
+		}
+
+		VkMemoryAllocateInfo			vmai;
+			vmai.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			vmai.pNext = nullptr;
+			vmai.allocationSize = vmr.size;
+			vmai.memoryTypeIndex = FindMemoryThatIsDeviceLocal( vmr.memoryTypeBits );  // because we want to sample from it
+
+		VkDeviceMemory				vdm;
+		result = vkAllocateMemory(LogicalDevice, IN &vmai, PALLOCATOR, OUT &vdm);
+		REPORT("vkAllocateMemory");
+
+		result = vkBindImageMemory( LogicalDevice, IN textureImage, IN vdm, 0 );	// 0 = offset
+		REPORT( "vkBindImageMemory" );
+	}
+	// *******************************************************************************
+
+
+	// copy pixels from the staging image to the texture:
+
+	VkCommandBufferBeginInfo		vcbbi;
+		vcbbi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		vcbbi.pNext = nullptr;
+		vcbbi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		vcbbi.pInheritanceInfo = (VkCommandBufferInheritanceInfo *)nullptr;
+
+	result = vkBeginCommandBuffer( TextureCommandBuffer, IN &vcbbi);
+	REPORT( "Init07TextureBuffer -- vkBeginCommandBuffer" );
+
+
+	// *******************************************************************************
+	// transition the staging buffer layout:
+	// *******************************************************************************
+	{
+		VkImageSubresourceRange			visr;
+			visr.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			visr.baseMipLevel = 0;
+			visr.levelCount = 1;
+			visr.baseArrayLayer = 0;
+			visr.layerCount = 1;
+			
+		VkImageMemoryBarrier			vimb;
+			vimb.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			vimb.pNext = nullptr;
+			vimb.oldLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+			vimb.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+			vimb.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			vimb.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			vimb.image = stagingImage;
+			vimb.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+			vimb.dstAccessMask = 0;
+			vimb.subresourceRange = visr;
+
+
+		vkCmdPipelineBarrier( TextureCommandBuffer,
+				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+				0, (VkMemoryBarrier *)nullptr,
+				0, (VkBufferMemoryBarrier *)nullptr,
+				1, IN &vimb );
+	}
+	// *******************************************************************************
+
+
+
+	// *******************************************************************************
+	// transition the texture buffer layout:
+	// *******************************************************************************
+	{
+		VkImageSubresourceRange			visr;
+			visr.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			visr.baseMipLevel = 0;
+			visr.levelCount = 1;
+			visr.baseArrayLayer = 0;
+			visr.layerCount = 1;
+
+		VkImageMemoryBarrier			vimb;
+			vimb.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			vimb.pNext = nullptr;
+			vimb.oldLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+			vimb.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			vimb.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			vimb.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			vimb.image = textureImage;
+			//vimb.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			vimb.srcAccessMask = 0;
+			vimb.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			vimb.subresourceRange = visr;
+
+		vkCmdPipelineBarrier(TextureCommandBuffer,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+			0, (VkMemoryBarrier *)nullptr,
+			0, (VkBufferMemoryBarrier *)nullptr,
+			1, IN &vimb);
+
+		// now do the final image transfer:
+
+		VkImageSubresourceLayers		visl;
+			visl.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			visl.baseArrayLayer = 0;
+			visl.mipLevel = 0;
+			visl.layerCount = 1;
+
+		VkOffset3D				vo3;
+			vo3.x = 0;
+			vo3.y = 0;
+			vo3.z = 0;
+
+		VkExtent3D				ve3;
+			ve3.width = texWidth;
+			ve3.height = texHeight;
+			ve3.depth = 1;
+
+		VkImageCopy				vic;
+			vic.srcSubresource = visl;
+			vic.srcOffset = vo3;
+			vic.dstSubresource = visl;
+			vic.dstOffset = vo3;
+			vic.extent = ve3;
+
+		vkCmdCopyImage(TextureCommandBuffer,
+			stagingImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1, IN &vic);
+	}
+// *******************************************************************************
+
+
+// *******************************************************************************
+// transition the texture buffer layout a second time:
+// *******************************************************************************
+	{
+		VkImageSubresourceRange			visr;
+			visr.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			visr.baseMipLevel = 0;
+			visr.levelCount = 1;
+			visr.baseArrayLayer = 0;
+			visr.layerCount = 1;
+
+		VkImageMemoryBarrier			vimb;
+			vimb.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			vimb.pNext = nullptr;
+			vimb.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			vimb.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			vimb.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			vimb.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			vimb.image = textureImage;
+			//vimb.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			vimb.srcAccessMask = 0;
+			//vimb.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+			vimb.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			vimb.subresourceRange = visr;
+
+		vkCmdPipelineBarrier(TextureCommandBuffer,
+			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+			0, (VkMemoryBarrier *)nullptr,
+			0, (VkBufferMemoryBarrier *)nullptr,
+			1, IN &vimb);
+	}
+	// *******************************************************************************
+
+	result = vkEndCommandBuffer( TextureCommandBuffer );
+	REPORT("Init07TextureBuffer -- vkEndCommandBuffer");
+
+	VkSubmitInfo				vsi;
+		vsi.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		vsi.pNext = nullptr;
+		vsi.commandBufferCount = 1;
+		vsi.pCommandBuffers = &TextureCommandBuffer;
+		vsi.waitSemaphoreCount = 0;
+		vsi.pWaitSemaphores = (VkSemaphore *)nullptr;
+		vsi.signalSemaphoreCount = 0;
+		vsi.pSignalSemaphores = (VkSemaphore *)nullptr;
+		vsi.pWaitDstStageMask = (VkPipelineStageFlags *)nullptr;
+
+	result = vkQueueSubmit( Queue, 1, IN &vsi, VK_NULL_HANDLE );
+	if (Verbose)		REPORT("vkQueueSubmit");
+
+	result = vkQueueWaitIdle( Queue );
+	if (Verbose)		REPORT("vkQueueWaitIdle");
+
+
+	// create an image view for the texture image:
+
+	VkImageSubresourceRange			visr;
+		visr.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		visr.baseMipLevel = 0;
+		visr.levelCount = 1;
+		visr.baseArrayLayer = 0;
+		visr.layerCount = 1;
+
+	VkImageViewCreateInfo			vivci;
+		vivci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		vivci.pNext = nullptr;
+		vivci.flags = 0;
+		vivci.image = textureImage;
+		vivci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		vivci.format = VK_FORMAT_R8G8B8A8_SRGB;
+		vivci.components.r = VK_COMPONENT_SWIZZLE_R;
+		vivci.components.g = VK_COMPONENT_SWIZZLE_G;
+		vivci.components.b = VK_COMPONENT_SWIZZLE_B;
+		vivci.components.a = VK_COMPONENT_SWIZZLE_A;
+		vivci.subresourceRange = visr;
+
+	result = vkCreateImageView(LogicalDevice, IN &vivci, PALLOCATOR, OUT &pMyTexture->texImageView);
+	REPORT("vkCreateImageView");
+
+	vkDestroyImage( LogicalDevice, stagingImage, PALLOCATOR );
+
+	return result;
+}

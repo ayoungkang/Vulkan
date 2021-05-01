@@ -1,0 +1,308 @@
+FpDebug: Width = 768 ; Height = 768
+
+***** InitGraphics *****
+
+Found 2 GLFW Required Instance Extensions:
+	VK_KHR_surface
+	VK_KHR_win32_surface
+
+***** Init01Instance *****
+
+4 Instance Layers originally wanted:
+	VK_LAYER_LUNARG_core_validation
+	VK_LAYER_LUNARG_object_tracker
+	VK_LAYER_LUNARG_parameter_validation
+	VK_LAYER_NV_optimus
+vkEnumerateInstanceLayerProperties: Successful
+
+0 Instance Layers actually available:
+
+Will now ask for 0 Instance Layers:
+
+3 Instance Extensions originally wanted:
+	VK_KHR_surface
+	VK_KHR_win32_surface
+	VK_EXT_debug_report
+vkEnumerateInstanceExtensionProperties: Successful
+
+11 Instance Extensions actually available:
+0x00000019  'VK_KHR_surface'
+0x00000005  'VK_KHR_win32_surface'
+0x00000001  'VK_KHR_external_memory_capabilities'
+0x00000001  'VK_KHR_external_semaphore_capabilities'
+0x00000001  'VK_KHR_external_fence_capabilities'
+0x00000001  'VK_KHR_get_physical_device_properties2'
+0x00000001  'VK_KHR_get_surface_capabilities2'
+0x00000001  'VK_KHR_device_group_creation'
+0x00000003  'VK_EXT_swapchain_colorspace'
+0x00000009  'VK_EXT_debug_report'
+0x00000001  'VK_EXT_debug_utils'
+
+Will now ask for 3 Instance Extensions
+	VK_KHR_surface
+	VK_KHR_win32_surface
+	VK_EXT_debug_report
+vkCreateInstance: Successful
+glfwCreateWindowSurface: Successful
+
+***** Init02CreateDebugCallbacks *****
+
+***** Init03PhysicalDeviceAndGetQueueFamilyProperties *****
+vkEnumeratePhysicalDevices - 1: Successful
+
+1 physical devices found.
+vkEnumeratePhysicalDevices - 2: Successful
+ 
+
+Device  0:
+	API version: 4198497
+	Driver version: 4198497
+	Vendor ID: 0x8086
+	Device ID: 0x5917
+	Physical Device Type: 1 = (Integrated GPU)
+	Device Name: Intel(R) UHD Graphics 620
+	Pipeline Cache Size: 129
+Device #0 selected ('Intel(R) UHD Graphics 620')
+
+Physical Device Features:
+geometryShader =  1
+tessellationShader =  1
+multiDrawIndirect =  1
+wideLines =  1
+largePoints =  1
+multiViewport =  1
+occlusionQueryPrecise =  1
+pipelineStatisticsQuery =  1
+shaderFloat64 =  1
+shaderInt64 =  1
+shaderInt16 =  1
+
+Image Formats Checked:
+Format VK_FORMAT_R32G32B32A32_SFLOAT: 0x0001dd83 0x0001dd83  0x00000058
+Format VK_FORMAT_R8G8B8A8_UNORM: 0x0001dd83 0x0001dd83  0x00000058
+Format VK_FORMAT_B8G8R8A8_UNORM: 0x0001dd81 0x0001dd81  0x00000048
+Format VK_FORMAT_B8G8R8A8_SRGB: 0x0001dd81 0x0001dd81  0x00000008
+
+2 Memory Types:
+Memory  0:  DeviceLocal HostVisible HostCoherent
+Memory  1:  DeviceLocal HostVisible HostCoherent HostCached
+
+1 Memory Heaps:
+Heap 0:  size = 0xe1b66400 DeviceLocal
+
+Found 1 Queue Families:
+	0: Queue Family Count =  1  ;    Graphics Compute Transfer
+
+***** Init04LogicalDeviceAndQueue *****
+vkEnumerateDeviceLayerProperties: Successful
+
+0 physical device layers enumerated:
+vkCreateLogicalDevice: Successful
+
+***** Init05DataBuffer *****
+vkCreateBuffer: Successful
+Buffer vmr.size = 256
+Buffer vmr.alignment = 32
+Buffer vmr.memoryTypeBits = 0x00000003
+
+***** Found given memory flag (0x00000002) and type (0x00000003): i = 0 *****
+vkAllocateMemory: Successful
+vkBindBufferMemory: Successful
+
+***** Init05DataBuffer *****
+vkCreateBuffer: Successful
+Buffer vmr.size = 64
+Buffer vmr.alignment = 32
+Buffer vmr.memoryTypeBits = 0x00000003
+
+***** Found given memory flag (0x00000002) and type (0x00000003): i = 0 *****
+vkAllocateMemory: Successful
+vkBindBufferMemory: Successful
+
+***** Init05DataBuffer *****
+vkCreateBuffer: Successful
+Buffer vmr.size = 32
+Buffer vmr.alignment = 32
+Buffer vmr.memoryTypeBits = 0x00000003
+
+***** Found given memory flag (0x00000002) and type (0x00000003): i = 0 *****
+vkAllocateMemory: Successful
+vkBindBufferMemory: Successful
+
+***** Init05DataBuffer *****
+vkCreateBuffer: Successful
+Buffer vmr.size = 26400
+Buffer vmr.alignment = 32
+Buffer vmr.memoryTypeBits = 0x00000003
+
+***** Found given memory flag (0x00000002) and type (0x00000003): i = 0 *****
+vkAllocateMemory: Successful
+vkBindBufferMemory: Successful
+InitDataBuffer: Successful
+
+***** Init05DataBuffer *****
+vkCreateBuffer: Successful
+Buffer vmr.size = 2112
+Buffer vmr.alignment = 32
+Buffer vmr.memoryTypeBits = 0x00000003
+
+***** Found given memory flag (0x00000002) and type (0x00000003): i = 0 *****
+vkAllocateMemory: Successful
+vkBindBufferMemory: Successful
+InitDataBuffer: Successful
+
+***** Init05DataBuffer *****
+vkCreateBuffer: Successful
+Buffer vmr.size = 352
+Buffer vmr.alignment = 32
+Buffer vmr.memoryTypeBits = 0x00000003
+
+***** Found given memory flag (0x00000002) and type (0x00000003): i = 0 *****
+vkAllocateMemory: Successful
+vkBindBufferMemory: Successful
+InitDataBuffer: Successful
+
+***** Init05DataBuffer *****
+vkCreateBuffer: Successful
+Buffer vmr.size = 160
+Buffer vmr.alignment = 32
+Buffer vmr.memoryTypeBits = 0x00000003
+
+***** Found given memory flag (0x00000002) and type (0x00000003): i = 0 *****
+vkAllocateMemory: Successful
+vkBindBufferMemory: Successful
+Init05MyIndexDataBufferBuffer: Successful
+
+***** Init06CommandPools *****
+vkCreateCommandPool -- Graphics: Successful
+vkCreateCommandPool -- Transfer: Successful
+
+***** Init06CommandBuffers *****
+vkAllocateCommandBuffers - 1: Successful
+vkAllocateCommandBuffers - 2: Successful
+
+***** Init07TextureSampler *****
+vkCreateSampler: Successful
+
+***** Init07TextureBufferAndFillFromBmpFile *****
+Image size found: 1024 x 1024
+
+***** Init07TextureBuffer *****
+vkCreateImage: Successful
+Image vmr.size = 4194304
+Image vmr.alignment = 4096
+Image vmr.memoryTypeBits = 0x00000003
+
+***** Found given memory flag (0x00000002) and type (0x00000003): i = 0 *****
+vkAllocateMemory: Successful
+vkBindImageMemory: Successful
+Subresource Layout:
+	offset = 0
+	size = 4194304
+	rowPitch = 4096
+	arrayPitch = 0
+	depthPitch = 0
+vkCreateImage: Successful
+Texture vmr.size = 4194304
+Texture vmr.alignment = 4096
+Texture vmr.memoryTypeBits = 0x00000003
+
+***** Found given memory flag (0x00000001) and type (0x00000003): i = 0 *****
+vkAllocateMemory: Successful
+vkBindImageMemory: Successful
+Init07TextureBuffer -- vkBeginCommandBuffer: Successful
+Init07TextureBuffer -- vkEndCommandBuffer: Successful
+vkQueueSubmit: Successful
+vkQueueWaitIdle: Successful
+vkCreateImageView: Successful
+Init07TextureBuffer: Successful
+
+***** Init08Swapchain *****
+
+vkGetPhysicalDeviceSurfaceCapabilitiesKHR:
+	minImageCount = 2 ; maxImageCount = 64
+	currentExtent = 768 x 768
+	minImageExtent = 768 x 768
+	maxImageExtent = 768 x 768
+	maxImageArrayLayers = 2048
+	supportedTransforms = 0x0001
+	currentTransform = 0x0001
+	supportedCompositeAlpha = 0x0009
+	supportedUsageFlags = 0x001f
+vkGetPhysicalDeviceSurfaceSupportKHR: Successful
+** This Surface is supported by the Graphics Queue **
+
+Found 4 Surface Formats:
+  0:       44                0	VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+  1:       50                0	VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+  2:       37                0	VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+  3:       43                0	VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+
+Found 2 Present Modes:
+  0:        0	VK_PRESENT_MODE_IMMEDIATE_KHR
+  1:        2	VK_PRESENT_MODE_FIFO_KHR
+The Present Mode to use = 2
+vkCreateSwapchainKHR: Successful
+vkGetSwapchainImagesKHR - 0: Successful
+vkGetSwapchainImagesKHR - 1: Successful
+vkCreateImageView: Successful
+vkCreateImageView: Successful
+
+***** Init09DepthStencilImage *****
+vkCreateImage: Successful
+
+***** Found given memory flag (0x00000001) and type (0x00000003): i = 0 *****
+vkAllocateMemory: Successful
+vkBindImageMemory: Successful
+vkCreateImageView: Successful
+
+***** Init10RenderPasses *****
+vkCreateRenderPass: Successful
+
+***** Init11Framebuffers *****
+vkCreateFrameBuffer - 0: Successful
+vkCreateFrameBuffer - 1: Successful
+
+***** Init12SpirvShader *****
+vkCreateShaderModule: Successful
+Shader Module 'sample-vert.spv' successfully loaded
+
+***** Init12SpirvShader *****
+vkCreateShaderModule: Successful
+Shader Module 'sample-frag.spv' successfully loaded
+
+***** Init13DescriptorSetPool *****
+vkCreateDescriptorPool: Successful
+
+***** Init13DescriptorSetLayouts *****
+vkCreateDescriptorSetLayout - 0: Successful
+vkCreateDescriptorSetLayout - 1: Successful
+vkCreateDescriptorSetLayout - 2: Successful
+vkCreateDescriptorSetLayout - 3: Successful
+
+***** Init13DescriptorSets *****
+vkAllocateDescriptorSets: Successful
+
+***** Init14GraphicsVertexFragmentPipeline *****
+vkCreatePipelineLayout: Successful
+vkCreateGraphicsPipelines: Successful
+
+***** Init14GraphicsVertexFragmentPipeline *****
+vkCreatePipelineLayout: Successful
+vkCreateGraphicsPipelines: Successful
+
+***** RenderScene *****
+nextImageIndex = 0
+vkQueueSubmit: Successful
+vkWaitForFences: Successful
+vkQueuePresentKHR: Successful
+
+***** RenderScene *****
+nextImageIndex = 1
+vkQueueSubmit: Successful
+vkWaitForFences: Successful
+vkQueuePresentKHR: Successful
+Mouse button = 0; Action = 1
+Mouse button = 0; Action = 0
+Closing the GLFW window
+vkWaitIdle: Successful
